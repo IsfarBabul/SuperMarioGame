@@ -9,15 +9,18 @@ import java.util.ArrayList;
 
 public class GraphicsPanel extends JPanel implements KeyListener, MouseListener, ActionListener {
     private BufferedImage background;
+    private BufferedImage background2;
     private Player player;
     private boolean[] pressedKeys;
     private ArrayList<Coin> coins;
     private Timer timer;
     private int time;
+    private JButton resetGame;
 
     public GraphicsPanel(String name) {
         try {
             background = ImageIO.read(new File("src/background.png"));
+            background2 = ImageIO.read(new File("src/background2.png"));
         } catch (IOException e) {
             System.out.println(e.getMessage());
         }
@@ -27,6 +30,10 @@ public class GraphicsPanel extends JPanel implements KeyListener, MouseListener,
         time = 0;
         timer = new Timer(1000, this); // this Timer will call the actionPerformed interface method every 1000ms = 1 second
         timer.start();
+        resetGame = new JButton("Clear Coins");
+        resetGame.setFocusable(false);
+        add(resetGame);
+        resetGame.addActionListener(this);
         addKeyListener(this);
         addMouseListener(this);
         setFocusable(true); // this line of code + one below makes this panel active for keylistener events
@@ -36,7 +43,15 @@ public class GraphicsPanel extends JPanel implements KeyListener, MouseListener,
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);  // just do this
-        g.drawImage(background, 0, 0, null);  // the order that things get "painted" matter; we put background down first
+        if (player.getScore() >= 10) {
+            g.drawImage(background2, 0, 0, null);
+            player.setLeft("src/mariofrogleft.png");
+            player.setRight("src/mariofrogright.png");
+        } else {
+            g.drawImage(background, 0, 0, null);  // the order that things get "painted" matter; we put background down first
+            player.setLeft("src/marioleft.png");
+            player.setRight("src/marioright.png");
+        }
         g.drawImage(player.getPlayerImage(), player.getxCoord(), player.getyCoord(), null);
 
         // this loop does two things:  it draws each Coin that gets placed with mouse clicks,
@@ -56,6 +71,7 @@ public class GraphicsPanel extends JPanel implements KeyListener, MouseListener,
         g.setFont(new Font("Courier New", Font.BOLD, 24));
         g.drawString(player.getName() + "'s Score: " + player.getScore(), 20, 40);
         g.drawString("Time: " + time, 20, 70);
+        resetGame.setLocation(20, 80);
 
         // player moves left (A)
         if (pressedKeys[65]) {
@@ -122,6 +138,11 @@ public class GraphicsPanel extends JPanel implements KeyListener, MouseListener,
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() instanceof Timer) {
             time++;
+        } else if (e.getSource() instanceof JButton) {
+            player.setScore(0);
+            player.setxCoord(50);
+            player.setyCoord(435);
+            player.faceRight();
         }
     }
 }

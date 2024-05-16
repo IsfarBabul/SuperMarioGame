@@ -28,6 +28,22 @@ public class Player {
         }
     }
 
+    public void setLeft(String left) {
+        try {
+            this.left = ImageIO.read(new File(left));
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    public void setRight(String right) {
+        try {
+            this.right = ImageIO.read(new File(right));
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
     public int getxCoord() {
         return (int) xCoord;
     }
@@ -36,8 +52,19 @@ public class Player {
         return (int) yCoord;
     }
 
+    public void setxCoord(double xCoord) {
+        this.xCoord = xCoord;
+    }
+
+    public void setyCoord(double yCoord) {
+        this.yCoord = yCoord;
+    }
+
     public int getScore() {
         return score;
+    }
+    public void setScore(int score) {
+        this.score = score;
     }
 
     public String getName() {
