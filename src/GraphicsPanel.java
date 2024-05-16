@@ -16,6 +16,10 @@ public class GraphicsPanel extends JPanel implements KeyListener, MouseListener,
     private Timer timer;
     private int time;
     private JButton resetGame;
+    private JButton pauseGame;
+    private boolean paused;
+    private boolean win;
+    private boolean lose;
 
     public GraphicsPanel(String name) {
         try {
@@ -30,10 +34,14 @@ public class GraphicsPanel extends JPanel implements KeyListener, MouseListener,
         time = 0;
         timer = new Timer(1000, this); // this Timer will call the actionPerformed interface method every 1000ms = 1 second
         timer.start();
-        resetGame = new JButton("Clear Coins");
+        resetGame = new JButton("Reset Game");
         resetGame.setFocusable(false);
         add(resetGame);
         resetGame.addActionListener(this);
+        pauseGame = new JButton("Pause");
+        pauseGame.setFocusable(false);
+        add(pauseGame);
+        pauseGame.addActionListener(this);
         addKeyListener(this);
         addMouseListener(this);
         setFocusable(true); // this line of code + one below makes this panel active for keylistener events
@@ -53,6 +61,17 @@ public class GraphicsPanel extends JPanel implements KeyListener, MouseListener,
             player.setRight("src/marioright.png");
         }
         g.drawImage(player.getPlayerImage(), player.getxCoord(), player.getyCoord(), null);
+        if (paused) {
+            g.setFont(new Font("Arial", Font.BOLD, 64));
+            g.setColor(Color.DARK_GRAY);
+            if (win) {
+                g.drawString("YOU WIN!", 400, 200);
+            } else if (lose) {
+                g.drawString("GAME OVER", 400, 200);
+            } else {
+                g.drawString("PAUSED", 400, 200);
+            }
+        }
 
         // this loop does two things:  it draws each Coin that gets placed with mouse clicks,
         // and it also checks if the player has "intersected" (collided with) the Coin, and if so,
@@ -61,7 +80,16 @@ public class GraphicsPanel extends JPanel implements KeyListener, MouseListener,
             Coin coin = coins.get(i);
             g.drawImage(coin.getImage(), coin.getxCoord(), coin.getyCoord(), null); // draw Coin
             if (player.playerRect().intersects(coin.coinRect())) { // check for collision
-                player.collectCoin();
+                if (coin instanceof SpikedBall) {
+                    lose = true;
+                    paused = true;
+                } else {
+                    player.collectCoin();
+                    if (player.getScore() >= 20) {
+                        win = true;
+                        paused = true;
+                    }
+                }
                 coins.remove(i);
                 i--;
             }
@@ -72,27 +100,30 @@ public class GraphicsPanel extends JPanel implements KeyListener, MouseListener,
         g.drawString(player.getName() + "'s Score: " + player.getScore(), 20, 40);
         g.drawString("Time: " + time, 20, 70);
         resetGame.setLocation(20, 80);
+        pauseGame.setLocation(20, 110);
 
-        // player moves left (A)
-        if (pressedKeys[65]) {
-            player.faceLeft();
-            player.moveLeft();
-        }
+        if (!paused) {
+            // player moves left (A)
+            if (pressedKeys[65]) {
+                player.faceLeft();
+                player.moveLeft();
+            }
 
-        // player moves right (D)
-        if (pressedKeys[68]) {
-            player.faceRight();
-            player.moveRight();
-        }
+            // player moves right (D)
+            if (pressedKeys[68]) {
+                player.faceRight();
+                player.moveRight();
+            }
 
-        // player moves up (W)
-        if (pressedKeys[87]) {
-            player.moveUp();
-        }
+            // player moves up (W)
+            if (pressedKeys[87]) {
+                player.moveUp();
+            }
 
-        // player moves down (S)
-        if (pressedKeys[83]) {
-            player.moveDown();
+            // player moves down (S)
+            if (pressedKeys[83]) {
+                player.moveDown();
+            }
         }
     }
 
@@ -118,14 +149,21 @@ public class GraphicsPanel extends JPanel implements KeyListener, MouseListener,
     public void mousePressed(MouseEvent e) { } // unimplemented
 
     public void mouseReleased(MouseEvent e) {
-        if (e.getButton() == MouseEvent.BUTTON1) {  // left mouse click
-            Point mouseClickLocation = e.getPoint();
-            Coin coin = new Coin(mouseClickLocation.x, mouseClickLocation.y);
-            coins.add(coin);
-        } else {
-            Point mouseClickLocation = e.getPoint();
-            if (player.playerRect().contains(mouseClickLocation)) {
-                player.turn();
+        if (!paused) {
+            if (e.getButton() == MouseEvent.BUTTON1) {  // left mouse click
+                Point mouseClickLocation = e.getPoint();
+                if (Math.random() < 0.75) {
+                    Coin coin = new Coin(mouseClickLocation.x, mouseClickLocation.y, "src/coin.png");
+                    coins.add(coin);
+                } else {
+                    SpikedBall ball = new SpikedBall(mouseClickLocation.x, mouseClickLocation.y, "src/spikedball.png");
+                    coins.add(ball);
+                }
+            } else {
+                Point mouseClickLocation = e.getPoint();
+                if (player.playerRect().contains(mouseClickLocation)) {
+                    player.turn();
+                }
             }
         }
     }
@@ -137,12 +175,25 @@ public class GraphicsPanel extends JPanel implements KeyListener, MouseListener,
     // ACTIONLISTENER INTERFACE METHODS: used for buttons AND timers!
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() instanceof Timer) {
-            time++;
+            if (!paused) {
+                time++;
+            }
         } else if (e.getSource() instanceof JButton) {
-            player.setScore(0);
-            player.setxCoord(50);
-            player.setyCoord(435);
-            player.faceRight();
+            JButton button = (JButton) e.getSource();
+            if (button == resetGame) {
+                player.setScore(0);
+                player.setxCoord(50);
+                player.setyCoord(435);
+                player.faceRight();
+                coins.clear();
+                paused = false;
+                win = false;
+                lose = false;
+            } else {
+                if (!win && !lose) {
+                    paused = !paused;
+                }
+            }
         }
     }
 }

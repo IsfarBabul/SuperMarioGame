@@ -9,11 +9,11 @@ public class Coin {
     private int yCoord;
     private BufferedImage image;
 
-    public Coin(int x, int y) {
+    public Coin(int x, int y, String img) {
         xCoord = x;
         yCoord = y;
         try {
-            image = ImageIO.read(new File("src/coin.png"));
+            image = ImageIO.read(new File(img));
         } catch (IOException e) {
             System.out.println(e.getMessage());
         }
